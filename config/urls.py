@@ -14,7 +14,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
 ]
 
-# Serve static and media files during development
+# Serve static files during development and media uploads for demo deployments.
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

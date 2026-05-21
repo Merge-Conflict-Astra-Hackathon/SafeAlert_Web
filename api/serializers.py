@@ -21,7 +21,7 @@ class BuildingSerializer(serializers.ModelSerializer):
     """Serializer untuk Building"""
     class Meta:
         model = Building
-        fields = ['id', 'name', 'address', 'latitude', 'longitude', 'total_capacity', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'address', 'floor_plan', 'latitude', 'longitude', 'total_capacity', 'created_at', 'updated_at']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

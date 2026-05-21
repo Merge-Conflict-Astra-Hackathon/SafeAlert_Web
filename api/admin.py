@@ -5,7 +5,7 @@ from api.models import AlertLog, Building, EmergencyAlert, UserAlertConfirmation
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
-    list_display = ("name", "address", "total_capacity", "created_at")
+    list_display = ("name", "floor_plan", "created_at")
     search_fields = ("name", "address")
     list_filter = ("created_at",)
     readonly_fields = ("created_at", "updated_at")

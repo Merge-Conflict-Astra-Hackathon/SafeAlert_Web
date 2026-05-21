@@ -1,5 +1,3 @@
-import json
-
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -133,10 +131,7 @@ def _building_payload(building):
     return {
         "id": building.id,
         "name": building.name,
-        "address": building.address,
-        "latitude": building.latitude,
-        "longitude": building.longitude,
-        "total_capacity": building.total_capacity,
+        "floor_plan_url": building.floor_plan.url if building.floor_plan else "",
         "user_count": building.userprofile_set.count(),
         "alert_count": building.alerts.count(),
         "created_at": building.created_at.strftime("%d %b %Y %H:%M"),
@@ -146,39 +141,23 @@ def _building_payload(building):
 @login_required(login_url="dashboard:login")
 @require_http_methods(["POST"])
 def building_create_api(request):
-    try:
-        payload = json.loads(request.body.decode("utf-8") or "{}")
-    except json.JSONDecodeError:
-        return JsonResponse({"message": "Format data tidak valid."}, status=400)
+    name = request.POST.get("name", "").strip()
+    floor_plan = request.FILES.get("floor_plan")
 
-    name = str(payload.get("name", "")).strip()
-    address = str(payload.get("address", "")).strip()
-    total_capacity = payload.get("total_capacity") or 0
-    latitude = payload.get("latitude")
-    longitude = payload.get("longitude")
-
-    if not name or not address:
-        return JsonResponse({"message": "Nama dan alamat gedung wajib diisi."}, status=400)
-
-    try:
-        total_capacity = int(total_capacity)
-        latitude = float(latitude) if latitude not in (None, "") else None
-        longitude = float(longitude) if longitude not in (None, "") else None
-    except (TypeError, ValueError):
-        return JsonResponse({"message": "Kapasitas, latitude, atau longitude tidak valid."}, status=400)
+    if not name:
+        return JsonResponse({"message": "Nama gedung wajib diisi."}, status=400)
 
     building = Building.objects.create(
         name=name,
-        address=address,
-        total_capacity=total_capacity,
-        latitude=latitude,
-        longitude=longitude,
+        address=name,
+        floor_plan=floor_plan,
+        total_capacity=0,
     )
     return JsonResponse({"message": "Gedung berhasil ditambahkan.", "building": _building_payload(building)}, status=201)
 
 
 @login_required(login_url="dashboard:login")
-@require_http_methods(["PATCH", "DELETE"])
+@require_http_methods(["POST", "DELETE"])
 def building_detail_api(request, building_id):
     try:
         building = Building.objects.get(id=building_id)
@@ -194,28 +173,21 @@ def building_detail_api(request, building_id):
         building.delete()
         return JsonResponse({"message": "Gedung berhasil dihapus."})
 
-    try:
-        payload = json.loads(request.body.decode("utf-8") or "{}")
-    except json.JSONDecodeError:
-        return JsonResponse({"message": "Format data tidak valid."}, status=400)
+    name = request.POST.get("name", "").strip()
+    floor_plan = request.FILES.get("floor_plan")
+    remove_floor_plan = request.POST.get("remove_floor_plan") == "true"
 
-    name = str(payload.get("name", "")).strip()
-    address = str(payload.get("address", "")).strip()
-    total_capacity = payload.get("total_capacity") or 0
-    latitude = payload.get("latitude")
-    longitude = payload.get("longitude")
-
-    if not name or not address:
-        return JsonResponse({"message": "Nama dan alamat gedung wajib diisi."}, status=400)
-
-    try:
-        building.total_capacity = int(total_capacity)
-        building.latitude = float(latitude) if latitude not in (None, "") else None
-        building.longitude = float(longitude) if longitude not in (None, "") else None
-    except (TypeError, ValueError):
-        return JsonResponse({"message": "Kapasitas, latitude, atau longitude tidak valid."}, status=400)
+    if not name:
+        return JsonResponse({"message": "Nama gedung wajib diisi."}, status=400)
 
     building.name = name
-    building.address = address
+    building.address = name
+    if remove_floor_plan and building.floor_plan:
+        building.floor_plan.delete(save=False)
+        building.floor_plan = None
+    if floor_plan:
+        if building.floor_plan:
+            building.floor_plan.delete(save=False)
+        building.floor_plan = floor_plan
     building.save()
     return JsonResponse({"message": "Gedung berhasil diperbarui.", "building": _building_payload(building)})

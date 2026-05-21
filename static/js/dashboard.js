@@ -176,7 +176,8 @@ function openBuildingModal(buildingId = null) {
 
     form.reset();
     document.getElementById('building-id').value = '';
-    document.getElementById('building-capacity').value = '0';
+    document.getElementById('building-remove-floor-plan').value = 'false';
+    document.getElementById('building-plan-current').classList.add('d-none');
     document.getElementById('building-modal-title').textContent = 'Tambah Gedung';
 
     if (buildingId) {
@@ -185,47 +186,47 @@ function openBuildingModal(buildingId = null) {
 
         document.getElementById('building-id').value = buildingId;
         document.getElementById('building-name').value = row.dataset.name || '';
-        document.getElementById('building-address').value = row.dataset.address || '';
-        document.getElementById('building-capacity').value = row.dataset.totalCapacity || '0';
-        document.getElementById('building-latitude').value = row.dataset.latitude || '';
-        document.getElementById('building-longitude').value = row.dataset.longitude || '';
         document.getElementById('building-modal-title').textContent = 'Edit Gedung';
+        if (row.dataset.floorPlanUrl) {
+            document.getElementById('building-plan-current').classList.remove('d-none');
+            const planLink = document.getElementById('building-plan-link');
+            planLink.href = row.dataset.floorPlanUrl;
+        }
     }
 
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
 
 function serializeBuildingForm() {
-    return {
-        name: document.getElementById('building-name').value.trim(),
-        address: document.getElementById('building-address').value.trim(),
-        total_capacity: document.getElementById('building-capacity').value || 0,
-        latitude: document.getElementById('building-latitude').value,
-        longitude: document.getElementById('building-longitude').value
-    };
+    const formData = new FormData();
+    const floorPlan = document.getElementById('building-floor-plan').files[0];
+    formData.append('name', document.getElementById('building-name').value.trim());
+    formData.append('remove_floor_plan', document.getElementById('building-remove-floor-plan').value);
+    if (floorPlan) {
+        formData.append('floor_plan', floorPlan);
+    }
+    return formData;
+}
+
+function markFloorPlanForRemoval() {
+    document.getElementById('building-remove-floor-plan').value = 'true';
+    document.getElementById('building-plan-current').classList.add('d-none');
+    document.getElementById('building-floor-plan').value = '';
 }
 
 function buildingRowHtml(building) {
-    const latitude = building.latitude ?? '';
-    const longitude = building.longitude ?? '';
-    const coordinate = latitude !== '' && latitude !== null && longitude !== '' && longitude !== null
-        ? `${escapeHtml(latitude)}, ${escapeHtml(longitude)}`
-        : '<span class="text-muted">-</span>';
+    const floorPlanUrl = building.floor_plan_url || '';
+    const floorPlanHtml = floorPlanUrl
+        ? `<a href="${escapeAttr(floorPlanUrl)}" target="_blank" rel="noopener"><img src="${escapeAttr(floorPlanUrl)}" alt="Denah ${escapeAttr(building.name)}" class="building-plan-thumb"></a>`
+        : '<span class="text-muted">Belum ada denah</span>';
 
     return `
         <tr id="building-row-${building.id}"
             data-building-id="${building.id}"
             data-name="${escapeAttr(building.name)}"
-            data-address="${escapeAttr(building.address)}"
-            data-total-capacity="${building.total_capacity}"
-            data-latitude="${latitude ?? ''}"
-            data-longitude="${longitude ?? ''}">
+            data-floor-plan-url="${escapeAttr(floorPlanUrl)}">
             <td class="fw-semibold building-name-cell">${escapeHtml(building.name)}</td>
-            <td class="building-address-cell">${escapeHtml(building.address)}</td>
-            <td class="building-capacity-cell">${building.total_capacity}</td>
-            <td class="building-coordinate-cell">${coordinate}</td>
-            <td>${building.user_count ?? 0}</td>
-            <td>${building.alert_count ?? 0}</td>
+            <td class="building-plan-cell">${floorPlanHtml}</td>
             <td>
                 <div class="action-group">
                     <button class="btn btn-sm btn-outline-primary" type="button" onclick="openBuildingModal(${building.id})" title="Edit">
@@ -263,8 +264,8 @@ if (buildingForm) {
 
         const buildingId = document.getElementById('building-id').value;
         const payload = serializeBuildingForm();
-        if (!payload.name || !payload.address) {
-            showToast('Nama dan alamat gedung wajib diisi.', 'warning');
+        if (!payload.get('name')) {
+            showToast('Nama gedung wajib diisi.', 'warning');
             return;
         }
 
@@ -273,12 +274,11 @@ if (buildingForm) {
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
 
         fetch(buildingId ? `/dashboard/api/buildings/${buildingId}/` : '/dashboard/api/buildings/', {
-            method: buildingId ? 'PATCH' : 'POST',
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify(payload)
+            body: payload
         })
         .then(response => response.json().then(data => {
             if (!response.ok) throw new Error(data.message || 'Gagal menyimpan gedung');

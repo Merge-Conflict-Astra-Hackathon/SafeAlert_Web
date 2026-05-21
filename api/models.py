@@ -6,6 +6,7 @@ class Building(models.Model):
     """Model untuk gedung/lokasi"""
     name = models.CharField(max_length=255)
     address = models.TextField()
+    floor_plan = models.ImageField(upload_to='building_floor_plans/', null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     total_capacity = models.IntegerField(default=0)

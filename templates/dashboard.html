@@ -504,7 +504,7 @@
                 <div class="content-card-header">
                     <div>
                         <h5><i class="bi bi-buildings-fill me-2"></i>Manajemen Gedung</h5>
-                        <p class="mb-0">Tambah, ubah, dan kelola gedung yang dipakai registrasi mobile dan pengiriman alarm.</p>
+                        <p class="mb-0">Tambah, ubah, dan kelola nama gedung serta gambar denah evakuasi.</p>
                     </div>
                     <button class="btn btn-send-alarm btn-sm" type="button" onclick="openBuildingModal()">
                         <i class="bi bi-plus-lg me-1"></i>Tambah Gedung
@@ -515,11 +515,7 @@
                         <thead>
                             <tr>
                                 <th>Nama</th>
-                                <th>Alamat</th>
-                                <th>Kapasitas</th>
-                                <th>Koordinat</th>
-                                <th>User</th>
-                                <th>Alarm</th>
+                                <th>Denah Gedung</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -528,22 +524,17 @@
                             <tr id="building-row-{{ building.id }}"
                                 data-building-id="{{ building.id }}"
                                 data-name="{{ building.name|escape }}"
-                                data-address="{{ building.address|escape }}"
-                                data-total-capacity="{{ building.total_capacity }}"
-                                data-latitude="{{ building.latitude|default:'' }}"
-                                data-longitude="{{ building.longitude|default:'' }}">
+                                data-floor-plan-url="{% if building.floor_plan %}{{ building.floor_plan.url }}{% endif %}">
                                 <td class="fw-semibold building-name-cell">{{ building.name }}</td>
-                                <td class="building-address-cell">{{ building.address }}</td>
-                                <td class="building-capacity-cell">{{ building.total_capacity }}</td>
-                                <td class="building-coordinate-cell">
-                                    {% if building.latitude and building.longitude %}
-                                    {{ building.latitude }}, {{ building.longitude }}
+                                <td class="building-plan-cell">
+                                    {% if building.floor_plan %}
+                                    <a href="{{ building.floor_plan.url }}" target="_blank" rel="noopener">
+                                        <img src="{{ building.floor_plan.url }}" alt="Denah {{ building.name }}" class="building-plan-thumb">
+                                    </a>
                                     {% else %}
-                                    <span class="text-muted">-</span>
+                                    <span class="text-muted">Belum ada denah</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ building.userprofile_set.count }}</td>
-                                <td>{{ building.alerts.count }}</td>
                                 <td>
                                     <div class="action-group">
                                         <button class="btn btn-sm btn-outline-primary" type="button" onclick="openBuildingModal({{ building.id }})" title="Edit">
@@ -557,7 +548,7 @@
                             </tr>
                             {% empty %}
                             <tr id="building-empty-row">
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="3" class="text-center text-muted py-4">
                                     <i class="bi bi-buildings" style="font-size:2rem;"></i>
                                     <p class="mt-2 mb-0">Belum ada gedung. Tambahkan gedung agar mobile bisa registrasi.</p>
                                 </td>
@@ -585,25 +576,21 @@
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-8">
+                        <div class="col-12">
                             <label class="form-label" for="building-name">Nama Gedung</label>
                             <input class="form-control" id="building-name" type="text" placeholder="Contoh: Gedung Astra Tower" required>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="building-capacity">Kapasitas</label>
-                            <input class="form-control" id="building-capacity" type="number" min="0" value="0" required>
-                        </div>
                         <div class="col-12">
-                            <label class="form-label" for="building-address">Alamat</label>
-                            <textarea class="form-control" id="building-address" rows="3" placeholder="Alamat lengkap gedung" required></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="building-latitude">Latitude</label>
-                            <input class="form-control" id="building-latitude" type="number" step="any" placeholder="-6.200000">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="building-longitude">Longitude</label>
-                            <input class="form-control" id="building-longitude" type="number" step="any" placeholder="106.816666">
+                            <label class="form-label" for="building-floor-plan">Image Denah Gedung</label>
+                            <input class="form-control" id="building-floor-plan" type="file" accept="image/*">
+                            <div class="building-plan-current d-none" id="building-plan-current">
+                                <span>Denah saat ini:</span>
+                                <a href="#" target="_blank" rel="noopener" id="building-plan-link">Lihat denah</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="markFloorPlanForRemoval()">
+                                    <i class="bi bi-trash me-1"></i>Hapus Denah
+                                </button>
+                            </div>
+                            <input type="hidden" id="building-remove-floor-plan" value="false">
                         </div>
                     </div>
                 </div>

@@ -2696,9 +2696,26 @@ body.login-page {
     box-shadow: 0 0 0 3px rgba(40, 46, 88, 0.12) !important;
 }
 
-.dashboard-page #table-buildings .building-address-cell {
-    max-width: 360px;
-    white-space: normal;
+.dashboard-page #table-buildings .building-plan-cell {
+    width: 220px;
+}
+
+.dashboard-page .building-plan-thumb {
+    width: 160px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1.5px solid var(--sa-border);
+    background: var(--sa-surface);
+}
+
+.dashboard-page .building-plan-current {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    color: var(--sa-text-soft);
+    font-size: .86rem;
 }
 
 @media (max-width: 768px) {
