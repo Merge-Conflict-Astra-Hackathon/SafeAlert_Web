@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.conf import settings
 import os
+import json
 from api.models import Building, UserProfile, EmergencyAlert, UserAlertConfirmation, AlertLog
 from api.serializers import (
     UserSerializer, UserProfileSerializer, BuildingSerializer,
@@ -30,6 +31,7 @@ def _user_payload(user):
         "floor": profile.last_location if profile else "",
         "building_id": building.id if building else None,
         "building_name": building.name if building else "",
+        "floor_plan": building.floor_plan.url if building and building.floor_plan else "",
     }
 
 
@@ -57,20 +59,35 @@ def _send_fcm_multicast(tokens, title, body, payload):
     if not tokens:
         return 0, None
 
-    cred_path = getattr(settings, "FIREBASE_CREDENTIALS_PATH", "firebase-credentials.json")
-    if not os.path.exists(cred_path):
-        return 0, f"Firebase credentials tidak ditemukan di: {cred_path}"
-
     try:
         if not firebase_admin._apps:
-            cred = credentials.Certificate(cred_path)
+            firebase_credentials_json = os.getenv("FIREBASE_CREDENTIALS_JSON", "").strip()
+            if firebase_credentials_json:
+                cred = credentials.Certificate(json.loads(firebase_credentials_json))
+            else:
+                cred_path = getattr(settings, "FIREBASE_CREDENTIALS_PATH", "firebase-credentials.json")
+                if not os.path.exists(cred_path):
+                    return 0, f"Firebase credentials tidak ditemukan di: {cred_path}"
+                cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred)
 
         msg = messaging.MulticastMessage(
             tokens=tokens,
             notification=messaging.Notification(title=title, body=body[:120]),
             data={k: str(v) for k, v in payload.items()},
-            android=messaging.AndroidConfig(priority="high"),
+            android=messaging.AndroidConfig(
+                priority="high",
+                notification=messaging.AndroidNotification(
+                    title=title,
+                    body=body[:120],
+                    channel_id="safealert_emergency",
+                    click_action="FLUTTER_NOTIFICATION_CLICK",
+                    priority="max",
+                    default_sound=True,
+                    default_vibrate_timings=True,
+                    visibility="public",
+                ),
+            ),
         )
         result = messaging.send_each_for_multicast(msg)
         return result.success_count, None
@@ -310,6 +327,7 @@ class EmergencyAlertViewSet(viewsets.ModelViewSet):
             payload={
                 "type": "emergency",
                 "alert_id": alert.id,
+                "alarm_id": alert.id,
                 "title": alert.title,
                 "message": alert.description,
             },

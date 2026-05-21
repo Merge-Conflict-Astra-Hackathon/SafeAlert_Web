@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.db.models import Case, IntegerField, Value, When
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -70,9 +71,24 @@ def register_view(request):
 
 @login_required(login_url="dashboard:login")
 def dashboard_view(request):
-    pending_users = UserProfile.objects.select_related("user", "building").filter(status="pending")
+    disability_order = Case(
+        When(disability_type="blind", then=Value(0)),
+        When(disability_type="deaf", then=Value(1)),
+        When(disability_type="none", then=Value(2)),
+        default=Value(3),
+        output_field=IntegerField(),
+    )
+    pending_users = (
+        UserProfile.objects.select_related("user", "building")
+        .filter(status="pending")
+        .annotate(disability_sort=disability_order)
+        .order_by("disability_sort", "-created_at")
+    )
     active_profiles = list(
-        UserProfile.objects.select_related("user", "building").exclude(status="pending")
+        UserProfile.objects.select_related("user", "building")
+        .exclude(status="pending")
+        .annotate(disability_sort=disability_order)
+        .order_by("disability_sort", "-created_at")
     )
     active_alert = EmergencyAlert.objects.select_related("building", "triggered_by").filter(status="active").first()
     all_alerts = EmergencyAlert.objects.select_related("building", "triggered_by").all()[:20]

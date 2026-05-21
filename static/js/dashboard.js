@@ -3,6 +3,8 @@
 // ============================================
 let alarmBeepTimer = null;
 let alarmAudioCtx = null;
+let lastStatsSnapshot = null;
+let dashboardReloadScheduled = false;
 const notifiedUserNotes = new Set();
 
 function startEmergencyBeep() {
@@ -126,6 +128,22 @@ function escapeHtml(value) {
 
 function escapeAttr(value) {
     return escapeHtml(value).replaceAll('`', '&#096;');
+}
+
+function isDashboardEditing() {
+    return Boolean(document.querySelector('.modal.show'));
+}
+
+function scheduleDashboardReload() {
+    if (dashboardReloadScheduled || isDashboardEditing()) return;
+    dashboardReloadScheduled = true;
+    setTimeout(() => {
+        if (isDashboardEditing()) {
+            dashboardReloadScheduled = false;
+            return;
+        }
+        location.reload();
+    }, 700);
 }
 
 // ============================================
@@ -674,6 +692,20 @@ function refreshStats() {
         // Update pending badge in sidebar
         const pendingBadge = document.getElementById('pending-count-badge');
         if (pendingBadge) pendingBadge.textContent = data.pending_users;
+
+        const nextSnapshot = {
+            total_users: Number(data.total_users || 0),
+            active_users: Number(data.active_users || 0),
+            pending_users: Number(data.pending_users || 0),
+            active_alerts: Number(data.active_alerts || 0),
+        };
+        const shouldReload = lastStatsSnapshot && Object.keys(nextSnapshot).some(
+            key => nextSnapshot[key] !== lastStatsSnapshot[key]
+        );
+        lastStatsSnapshot = nextSnapshot;
+        if (shouldReload) {
+            scheduleDashboardReload();
+        }
         
         updateTimestamp();
     })
