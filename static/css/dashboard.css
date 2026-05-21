@@ -2343,22 +2343,40 @@ body.login-page {
 
 .dashboard-page #table-users th:nth-child(1),
 .dashboard-page #table-users td:nth-child(1) {
-    width: 26% !important;
+    width: 24% !important;
 }
 
 .dashboard-page #table-users th:nth-child(2),
 .dashboard-page #table-users td:nth-child(2) {
-    width: 36% !important;
+    width: 10% !important;
 }
 
 .dashboard-page #table-users th:nth-child(3),
 .dashboard-page #table-users td:nth-child(3) {
-    width: 18% !important;
+    width: 30% !important;
 }
 
 .dashboard-page #table-users th:nth-child(4),
 .dashboard-page #table-users td:nth-child(4) {
+    width: 16% !important;
+}
+
+.dashboard-page #table-users th:nth-child(5),
+.dashboard-page #table-users td:nth-child(5) {
     width: 20% !important;
+}
+
+.dashboard-page #table-users .floor-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #edf0f6;
+    color: var(--sa-text);
+    font-size: 0.78rem;
+    font-weight: 800;
 }
 
 .dashboard-page #table-users .disaster-status-select {

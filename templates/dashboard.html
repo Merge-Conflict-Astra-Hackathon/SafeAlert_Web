@@ -436,6 +436,7 @@
                         <thead>
                             <tr>
                                 <th>Nama</th>
+                                <th>Lantai</th>
                                 <th>Notes Darurat</th>
                                 <th>Disabilitas</th>
                                 <th class="status-header">Status</th>
@@ -447,6 +448,9 @@
                                 <td>
                                     <div class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
                                     <small class="text-muted">{{ profile.phone_number|default:'-' }}</small>
+                                </td>
+                                <td>
+                                    <span class="floor-pill">{{ profile.last_location|default:'-' }}</span>
                                 </td>
                                 <td>
                                     <div class="user-notes-cell" id="user-notes-{{ profile.user.id }}">
@@ -480,7 +484,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
+                                <td colspan="5" class="text-center text-muted py-4">
                                     <i class="bi bi-people" style="font-size:2rem;"></i>
                                     <p class="mt-2 mb-0">Belum ada user terdaftar</p>
                                 </td>
