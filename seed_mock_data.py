@@ -63,7 +63,7 @@ def create_users(buildings):
         {'username': 'user_008', 'email': 'user008@safealert.local', 'first_name': 'Hanif', 'last_name': 'Rahman'},
     ]
     
-    disability_types = ['none', 'deaf', 'blind', 'mobility']
+    disability_types = ['none', 'deaf', 'blind']
     
     created_users = []
     for i, user_data in enumerate(users_data):

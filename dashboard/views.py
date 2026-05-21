@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
-from api.models import Building, EmergencyAlert, UserProfile
+from api.models import Building, EmergencyAlert, UserAlertConfirmation, UserProfile
 
 
 def login_view(request):
@@ -70,10 +70,36 @@ def register_view(request):
 @login_required(login_url="dashboard:login")
 def dashboard_view(request):
     pending_users = UserProfile.objects.select_related("user", "building").filter(status="pending")
-    active_profiles = UserProfile.objects.select_related("user", "building").exclude(status="pending")
+    active_profiles = list(
+        UserProfile.objects.select_related("user", "building").exclude(status="pending")
+    )
     active_alert = EmergencyAlert.objects.select_related("building", "triggered_by").filter(status="active").first()
     all_alerts = EmergencyAlert.objects.select_related("building", "triggered_by").all()[:20]
     buildings = Building.objects.all()
+    latest_confirmation_by_user = {}
+
+    latest_confirmations = (
+        UserAlertConfirmation.objects.select_related("alert")
+        .order_by("-confirmed_at", "-notified_at")
+    )
+    for confirmation in latest_confirmations:
+        if confirmation.user_id not in latest_confirmation_by_user:
+            latest_confirmation_by_user[confirmation.user_id] = confirmation
+
+    for profile in active_profiles:
+        latest_confirmation = latest_confirmation_by_user.get(profile.user_id)
+        latest_status = latest_confirmation.status if latest_confirmation else ""
+        profile.latest_emergency_note = latest_confirmation.notes if latest_confirmation else ""
+        profile.latest_emergency_location = latest_confirmation.location if latest_confirmation else ""
+        profile.latest_emergency_status = latest_status
+        profile.latest_emergency_confirmation_id = latest_confirmation.id if latest_confirmation else None
+        profile.latest_emergency_alert_title = latest_confirmation.alert.title if latest_confirmation else ""
+        profile.latest_emergency_status_label = {
+            "safe": "Aman",
+            "needs_help": "Evakuasi",
+            "trapped": "Terjebak",
+            "no_response": "Belum Respon",
+        }.get(latest_status, "Belum Ada Status")
 
     context = {
         "pending_users": pending_users,

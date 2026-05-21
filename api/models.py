@@ -22,11 +22,10 @@ class Building(models.Model):
 class UserProfile(models.Model):
     """Extended user profile untuk menyimpan informasi tambahan"""
     DISABILITY_CHOICES = [
-        ('none', 'No Disability'),
-        ('deaf', 'Deaf'),
-        ('blind', 'Blind'),
-        ('mobility', 'Mobility Impairment'),
-        ('other', 'Other'),
+        ('none', 'Tidak Ada'),
+        ('deaf', 'Tuli / Tunarungu'),
+        ('blind', 'Buta / Tunanetra'),
+        ('other', 'Lainnya'),
     ]
 
     STATUS_CHOICES = [

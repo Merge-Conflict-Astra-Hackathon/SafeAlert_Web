@@ -3,6 +3,65 @@
 
 {% block title %}Dashboard{% endblock %}
 {% block body_class %}dashboard-page{% endblock %}
+{% block extra_css %}
+<style>
+    body.dashboard-page {
+        --sa-brand: #282E58;
+        --sa-brand-2: #282E58;
+        --accent-purple: #282E58;
+    }
+
+    body.dashboard-page .sidebar-nav .nav-link.active,
+    body.dashboard-page .btn-send-alarm,
+    body.dashboard-page .alarm-submit-btn,
+    body.dashboard-page .btn-login {
+        background: #282E58 !important;
+        color: #ffffff !important;
+        border-color: #282E58 !important;
+        box-shadow: 0 8px 20px rgba(40, 46, 88, 0.22) !important;
+    }
+
+    body.dashboard-page .sidebar-nav .nav-link.active i,
+    body.dashboard-page .sidebar-nav .nav-link.active span {
+        color: #ffffff !important;
+    }
+
+    body.dashboard-page .sidebar-nav .nav-link:hover {
+        color: #282E58 !important;
+    }
+
+    body.dashboard-page .sidebar-nav .nav-link.active:hover {
+        color: #ffffff !important;
+    }
+
+    body.dashboard-page .header-title,
+    body.dashboard-page .content-card-header h5,
+    body.dashboard-page .alarm-card-header h5,
+    body.dashboard-page .alarm-history-header h5,
+    body.dashboard-page .stat-value {
+        color: #282E58 !important;
+    }
+
+    body.dashboard-page .stat-card.info::before {
+        background: #282E58 !important;
+    }
+
+    body.dashboard-page .alarm-form-card .form-control:focus,
+    body.dashboard-page .alarm-form-card .form-select:focus,
+    body.dashboard-page textarea.alarm-textarea:focus {
+        border-color: #282E58 !important;
+        box-shadow: 0 0 0 3px rgba(40, 46, 88, 0.12) !important;
+    }
+
+    body.dashboard-page .nav-tabs-custom .nav-link.active::after {
+        background: #282E58 !important;
+    }
+
+    body.dashboard-page .badge-cancelled {
+        color: #BA3525 !important;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="dashboard-wrapper">
@@ -42,12 +101,6 @@
                 <i class="bi bi-people-fill"></i>
                 <span>Daftar User</span>
             </a>
-            
-            <div class="nav-section-title mt-4">SISTEM</div>
-            <a href="#" class="nav-link" onclick="location.reload()">
-                <i class="bi bi-arrow-clockwise"></i>
-                <span>Refresh Data</span>
-            </a>
         </nav>
         
         <div class="sidebar-footer">
@@ -77,7 +130,7 @@
                         <span class="live-dot"></span>
                         <span>Live Monitoring</span>
                     </span>
-                    &mdash; Update otomatis setiap 5 detik
+                    &mdash; Update otomatis setiap 1 detik
                 </p>
             </div>
             <div class="d-flex align-items-center gap-3">
@@ -125,7 +178,7 @@
                     <div class="modal-body">
                         <h5 class="fw-bold">{{ active_alert.title }}</h5>
                         <p class="mb-2">{{ active_alert.description }}</p>
-                        <small class="text-muted">Dipicu oleh: {{ active_alert.triggered_by.get_full_name|default:active_alert.triggered_by.username }} | {{ active_alert.created_at|date:'d M Y H:i:s' }}</small>
+                        <small class="text-muted">{{ active_alert.triggered_by.get_full_name|default:active_alert.triggered_by.username }} | {{ active_alert.created_at|date:'d M Y H:i:s' }}</small>
                     </div>
                     <div class="modal-footer border-0">
                         <button class="btn btn-outline-warning" onclick="resolveAlert({{ active_alert.id }})">
@@ -143,9 +196,17 @@
         <!-- TAB 1: Alarm & Riwayat -->
         <div class="tab-content-panel {% if not active_alert %}d-none{% endif %}" id="tab-alerts">
             <!-- Send Alarm Panel -->
-            <div class="alert-panel {% if active_alert %}has-active-alert urgent-top-panel{% endif %}" id="alarm-panel">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h5 class="mb-0"><i class="bi bi-megaphone-fill me-2 text-danger"></i>Kirim Alarm Darurat</h5>
+            <div class="alert-panel alarm-register-card {% if active_alert %}has-active-alert urgent-top-panel{% endif %}" id="alarm-panel">
+                <div class="alarm-card-header">
+                    <div class="alarm-card-title-group">
+                        <div class="alarm-card-icon">
+                            <i class="bi bi-megaphone-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Kirim Alarm Darurat</h5>
+                            <p class="mb-0">Pilih gedung, tipe insiden, lalu kirim instruksi evakuasi.</p>
+                        </div>
+                    </div>
                     {% if active_alert %}
                     <span class="badge badge-status badge-active pulse-animation"><i class="bi bi-exclamation-triangle-fill me-1"></i>ALARM AKTIF</span>
                     {% endif %}
@@ -153,7 +214,7 @@
                 
                 {% if active_alert %}
                 <div class="active-alert-info mb-3">
-                    <div class="alert alert-danger border-0" style="background: rgba(239,68,68,0.15);">
+                    <div class="alert alert-danger border-0 active-alert-callout">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>{{ active_alert.title }}</strong>
@@ -205,56 +266,52 @@
                 </div>
                 
                 {% else %}
-                <form id="alarm-form">
+                <form id="alarm-form" class="alarm-form-card">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="alarm-building" class="form-label">Gedung</label>
-                        <select class="form-select" id="alarm-building" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
-                            {% for building in buildings %}
-                            <option value="{{ building.id }}">{{ building.name }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="alarm-form-grid">
+                        <div class="form-group">
+                            <label for="alarm-building" class="form-label">Gedung</label>
+                            <select class="form-select" id="alarm-building" required>
+                                {% for building in buildings %}
+                                <option value="{{ building.id }}">{{ building.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="alarm-type" class="form-label">Tipe Alarm</label>
+                            <select class="form-select" id="alarm-type" required>
+                                <option value="fire">Kebakaran</option>
+                                <option value="earthquake">Gempa Bumi</option>
+                                <option value="medical">Medis</option>
+                                <option value="security">Keamanan</option>
+                                <option value="other">Lainnya</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="alarm-type" class="form-label">Tipe Alarm</label>
-                        <select class="form-select" id="alarm-type" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
-                            <option value="fire">Kebakaran</option>
-                            <option value="earthquake">Gempa Bumi</option>
-                            <option value="medical">Medis</option>
-                            <option value="security">Keamanan</option>
-                            <option value="other">Lainnya</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
+                    <div class="form-group">
                         <label for="alarm-title" class="form-label">Judul Alarm</label>
-                        <input type="text" class="form-control" id="alarm-title" placeholder="Contoh: Kebakaran Lantai 3" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
+                        <input type="text" class="form-control" id="alarm-title" placeholder="Contoh: Kebakaran Lantai 3" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group">
                         <label for="alarm-message" class="form-label">Pesan / Instruksi Evakuasi</label>
-                        <textarea class="form-control alarm-textarea" id="alarm-message" rows="3" placeholder="Ketik instruksi evakuasi detail untuk semua penghuni..." required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);"></textarea>
+                        <textarea class="form-control alarm-textarea" id="alarm-message" rows="4" placeholder="Ketik instruksi evakuasi detail untuk penghuni gedung terpilih..." required></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="alarm-severity" class="form-label">Tingkat Keparahan</label>
-                        <select class="form-select" id="alarm-severity" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
-                            <option value="1">Rendah</option>
-                            <option value="2">Sedang</option>
-                            <option value="3" selected>Tinggi</option>
-                            <option value="4">Kritis</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-send-alarm w-100" id="btn-send-alarm">
-                        <i class="bi bi-broadcast me-2"></i>KIRIM ALARM KE SEMUA USER
+                    <button type="submit" class="btn btn-send-alarm w-100 alarm-submit-btn" id="btn-send-alarm">
+                        <i class="bi bi-broadcast me-2"></i>KIRIM ALARM KE GEDUNG TERPILIH
                     </button>
                 </form>
                 {% endif %}
             </div>
 
             <!-- Alert History -->
-            <div class="content-card">
-                <div class="content-card-header">
-                    <h5><i class="bi bi-clock-history me-2"></i>Riwayat Alarm</h5>
+            <div class="content-card alarm-history-card">
+                <div class="content-card-header alarm-history-header">
+                    <div>
+                        <h5><i class="bi bi-clock-history me-2"></i>Riwayat Alarm</h5>
+                        <p class="mb-0">Catatan alarm terakhir yang dikirim oleh operator.</p>
+                    </div>
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive alarm-history-table">
                     <table class="table table-dark-custom">
                         <thead>
                             <tr>
@@ -373,41 +430,56 @@
                         <thead>
                             <tr>
                                 <th>Nama</th>
-                                <th>No HP</th>
+                                <th>Notes Darurat</th>
                                 <th>Disabilitas</th>
-                                <th>Admin Status</th>
-                                <th>Di Gedung</th>
-                                <th>Lokasi Terakhir</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for profile in active_profiles %}
-                            <tr data-building-id="{{ profile.building.id|default:'' }}">
+                            <tr data-building-id="{{ profile.building.id|default:'' }}" data-user-id="{{ profile.user.id }}">
                                 <td>
                                     <div class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
-                                    <small class="text-muted">{{ profile.user.email }}</small>
+                                    <small class="text-muted">{{ profile.phone_number|default:'-' }}</small>
                                 </td>
-                                <td><a href="tel:{{ profile.phone_number }}" class="phone-link"><i class="bi bi-telephone-fill"></i>{{ profile.phone_number }}</a></td>
-                                <td><span class="disability-pill disability-{{ profile.disability_type }}">{{ profile.get_disability_type_display }}</span></td>
                                 <td>
-                                    <select class="form-select form-select-sm status-select admin-status-select" onchange="updateUserStatus({{ profile.id }}, this.value)" data-profile-id="{{ profile.id }}">
-                                        <option value="active" {% if profile.status == 'active' %}selected{% endif %}>Aman (Active)</option>
-                                        <option value="pending" {% if profile.status == 'pending' %}selected{% endif %}>Pending</option>
-                                        <option value="blocked" {% if profile.status == 'blocked' %}selected{% endif %}>Blocked</option>
+                                    <div class="user-notes-cell" id="user-notes-{{ profile.user.id }}">
+                                        {% if profile.latest_emergency_note or profile.latest_emergency_location or profile.latest_emergency_alert_title %}
+                                        <div class="user-notes-alert">
+                                            <div class="user-notes-meta">
+                                                <i class="bi bi-geo-alt me-1"></i>{{ profile.latest_emergency_location|default:'Lokasi tidak diketahui' }}
+                                            </div>
+                                            {% if profile.latest_emergency_alert_title %}
+                                            <div class="user-notes-meta">
+                                                <i class="bi bi-bell me-1"></i>{{ profile.latest_emergency_alert_title }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">Belum ada notes</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td><span class="disability-pill disability-{{ profile.disability_type }}">{{ profile.get_disability_type_display }}</span></td>
+                                <td class="status-cell">
+                                    <select
+                                        class="form-select form-select-sm disaster-status-select status-{{ profile.latest_emergency_status|default:'empty' }}"
+                                        onchange="updateDisasterStatus(this)"
+                                        data-confirmation-id="{{ profile.latest_emergency_confirmation_id|default:'' }}"
+                                        {% if not profile.latest_emergency_confirmation_id %}disabled{% endif %}>
+                                        {% if not profile.latest_emergency_confirmation_id %}
+                                        <option value="">Belum Ada Status</option>
+                                        {% endif %}
+                                        <option value="safe" {% if profile.latest_emergency_status == 'safe' %}selected{% endif %}>Aman</option>
+                                        <option value="needs_help" {% if profile.latest_emergency_status == 'needs_help' %}selected{% endif %}>Evakuasi</option>
+                                        <option value="trapped" {% if profile.latest_emergency_status == 'trapped' %}selected{% endif %}>Terjebak</option>
+                                        <option value="no_response" {% if profile.latest_emergency_status == 'no_response' %}selected{% endif %}>Belum Respon</option>
                                     </select>
                                 </td>
-                                <td>
-                                    {% if profile.is_inside_building %}
-                                    <span class="badge badge-status badge-safe"><i class="bi bi-geo-alt-fill me-1"></i>Ya</span>
-                                    {% else %}
-                                    <span class="badge badge-status badge-outside"><i class="bi bi-geo me-1"></i>Tidak</span>
-                                    {% endif %}
-                                </td>
-                                <td><small class="location-text">{{ profile.last_location|default:'-' }}</small></td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="4" class="text-center text-muted py-4">
                                     <i class="bi bi-people" style="font-size:2rem;"></i>
                                     <p class="mt-2 mb-0">Belum ada user terdaftar</p>
                                 </td>
@@ -448,7 +520,7 @@
             if (window.ACTIVE_ALERT_ID) {
                 loadConfirmations(window.ACTIVE_ALERT_ID);
             }
-        }, 5000);
+        }, 1000);
     });
 </script>
 {% endblock %}

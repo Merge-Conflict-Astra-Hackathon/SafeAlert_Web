@@ -5,6 +5,7 @@ from api import views
 
 router = DefaultRouter()
 router.register(r'buildings', views.BuildingViewSet)
+router.register(r'auth', views.MobileAuthViewSet, basename='mobile-auth')
 router.register(r'users', views.UserProfileViewSet)
 router.register(r'alerts', views.EmergencyAlertViewSet)
 router.register(r'confirmations', views.UserAlertConfirmationViewSet)
