@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-shield-fill-check" style="font-size:1.5rem;color:#ef4444;"></i>
+                <div>
+                    <h5 class="mb-0 fw-bold">SafeAlert</h5>
+                    <small class="text-muted">Control Center</small>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">MENU UTAMA</div>
+            <a href="#" class="nav-link {% if active_alert %}active{% endif %}" data-tab="tab-alerts" onclick="switchTab(this, 'tab-alerts')">
+                <i class="bi bi-megaphone-fill"></i>
+                <span>Alarm & Riwayat</span>
+                {% if active_alert %}
+                <span class="badge bg-danger ms-auto pulse-animation">AKTIF</span>
+                {% endif %}
+            </a>
+            <a href="#"
+               class="nav-link {% if not active_alert %}active{% endif %}"
+               data-tab="tab-verify"
+               onclick="switchTab(this, 'tab-verify')">
+                <i class="bi bi-person-check-fill"></i>
+                <span>Verifikasi User</span>
+                <span class="badge bg-warning text-dark ms-auto" id="pending-count-badge">{{ pending_count }}</span>
+            </a>
+            <a href="#"
+               class="nav-link"
+               data-tab="tab-users"
+               onclick="switchTab(this, 'tab-users')">
+                <i class="bi bi-people-fill"></i>
+                <span>Daftar User</span>
+            </a>
+            
+            <div class="nav-section-title mt-4">SISTEM</div>
+            <a href="#" class="nav-link" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh Data</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="user-avatar">
+                    <i class="bi bi-person-circle" style="font-size:1.8rem;"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+                    <small class="text-muted">Operator</small>
+                </div>
+            </div>
+            <a href="{% url 'dashboard:logout' %}" class="btn btn-outline-danger btn-sm w-100">
+                <i class="bi bi-box-arrow-left me-1"></i>Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="header-bar">
+            <div>
+                <h1 class="header-title">Dashboard Monitoring</h1>
+                <p class="header-subtitle">
+                    <span class="live-indicator">
+                        <span class="live-dot"></span>
+                        <span>Live Monitoring</span>
+                    </span>
+                    &mdash; Update otomatis setiap 5 detik
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end">
+                    <small class="text-muted d-block">Terakhir diperbarui</small>
+                    <span class="fw-semibold" id="last-updated">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card info">
+                <div class="stat-value" id="stat-total-users">{{ total_users }}</div>
+                <div class="stat-label">Total User</div>
+                <i class="bi bi-people stat-icon"></i>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-value" id="stat-active-users">{{ active_users }}</div>
+                <div class="stat-label">User Aktif</div>
+                <i class="bi bi-person-check stat-icon"></i>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value" id="stat-pending-users">{{ pending_count }}</div>
+                <div class="stat-label">Menunggu Verifikasi</div>
+                <i class="bi bi-hourglass-split stat-icon"></i>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-value" id="stat-active-alerts">{{ active_alerts_count }}</div>
+                <div class="stat-label">Alarm Aktif</div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        {% if active_alert %}
+        <div class="modal fade show emergency-modal-overlay" id="activeAlertModal" tabindex="-1" aria-modal="true" role="dialog" style="display:block;">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content emergency-modal">
+                    <div class="modal-header border-0">
+                        <h4 class="modal-title text-danger fw-bold mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>ALARM DARURAT AKTIF
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <h5 class="fw-bold">{{ active_alert.title }}</h5>
+                        <p class="mb-2">{{ active_alert.description }}</p>
+                        <small class="text-muted">Dipicu oleh: {{ active_alert.triggered_by.get_full_name|default:active_alert.triggered_by.username }} | {{ active_alert.created_at|date:'d M Y H:i:s' }}</small>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button class="btn btn-outline-warning" onclick="resolveAlert({{ active_alert.id }})">
+                            <i class="bi bi-check-circle me-1"></i>Selesaikan Alarm
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="cancelAlert({{ active_alert.id }})">
+                            <i class="bi bi-x-circle me-1"></i>Batalkan Alarm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TAB 1: Alarm & Riwayat -->
+        <div class="tab-content-panel {% if not active_alert %}d-none{% endif %}" id="tab-alerts">
+            <!-- Send Alarm Panel -->
+            <div class="alert-panel {% if active_alert %}has-active-alert urgent-top-panel{% endif %}" id="alarm-panel">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="mb-0"><i class="bi bi-megaphone-fill me-2 text-danger"></i>Kirim Alarm Darurat</h5>
+                    {% if active_alert %}
+                    <span class="badge badge-status badge-active pulse-animation"><i class="bi bi-exclamation-triangle-fill me-1"></i>ALARM AKTIF</span>
+                    {% endif %}
+                </div>
+                
+                {% if active_alert %}
+                <div class="active-alert-info mb-3">
+                    <div class="alert alert-danger border-0" style="background: rgba(239,68,68,0.15);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ active_alert.title }}</strong>
+                                <p class="mb-0 mt-1 small">{{ active_alert.description }}</p>
+                                <small class="text-muted">Dipicu oleh: {{ active_alert.triggered_by.get_full_name|default:active_alert.triggered_by.username }} | {{ active_alert.created_at|date:'d M Y H:i:s' }}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline-warning btn-sm me-2" onclick="resolveAlert({{ active_alert.id }})">
+                                    <i class="bi bi-check-circle me-1"></i>Selesaikan
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="cancelAlert({{ active_alert.id }})">
+                                    <i class="bi bi-x-circle me-1"></i>Batalkan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Confirmation Status for Active Alert -->
+                <div class="confirmation-summary mb-3" id="confirmation-summary">
+                    <h6><i class="bi bi-clipboard-check me-2"></i>Status Konfirmasi User</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col-3">
+                            <div class="mini-stat text-center">
+                                <div class="mini-stat-value text-success" id="conf-safe">0</div>
+                                <div class="mini-stat-label">Aman</div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="mini-stat text-center">
+                                <div class="mini-stat-value text-danger" id="conf-trapped">0</div>
+                                <div class="mini-stat-label">Terjebak</div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="mini-stat text-center">
+                                <div class="mini-stat-value text-warning" id="conf-needs-help">0</div>
+                                <div class="mini-stat-label">Butuh Bantuan</div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="mini-stat text-center">
+                                <div class="mini-stat-value text-secondary" id="conf-no-response">0</div>
+                                <div class="mini-stat-label">Belum Respon</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="confirmation-list"></div>
+                </div>
+                
+                {% else %}
+                <form id="alarm-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="alarm-building" class="form-label">Gedung</label>
+                        <select class="form-select" id="alarm-building" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
+                            {% for building in buildings %}
+                            <option value="{{ building.id }}">{{ building.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alarm-type" class="form-label">Tipe Alarm</label>
+                        <select class="form-select" id="alarm-type" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
+                            <option value="fire">Kebakaran</option>
+                            <option value="earthquake">Gempa Bumi</option>
+                            <option value="medical">Medis</option>
+                            <option value="security">Keamanan</option>
+                            <option value="other">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alarm-title" class="form-label">Judul Alarm</label>
+                        <input type="text" class="form-control" id="alarm-title" placeholder="Contoh: Kebakaran Lantai 3" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
+                    </div>
+                    <div class="mb-3">
+                        <label for="alarm-message" class="form-label">Pesan / Instruksi Evakuasi</label>
+                        <textarea class="form-control alarm-textarea" id="alarm-message" rows="3" placeholder="Ketik instruksi evakuasi detail untuk semua penghuni..." required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alarm-severity" class="form-label">Tingkat Keparahan</label>
+                        <select class="form-select" id="alarm-severity" required style="background:#1e293b;color:#f1f5f9;border-color:rgba(148,163,184,0.1);">
+                            <option value="1">Rendah</option>
+                            <option value="2">Sedang</option>
+                            <option value="3" selected>Tinggi</option>
+                            <option value="4">Kritis</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-send-alarm w-100" id="btn-send-alarm">
+                        <i class="bi bi-broadcast me-2"></i>KIRIM ALARM KE SEMUA USER
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Alert History -->
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h5><i class="bi bi-clock-history me-2"></i>Riwayat Alarm</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark-custom">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Tipe</th>
+                                <th>Judul</th>
+                                <th>Gedung</th>
+                                <th>Dipicu Oleh</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in all_alerts %}
+                            <tr>
+                                <td><small>{{ alert.created_at|date:'d M Y H:i' }}</small></td>
+                                <td><span class="badge badge-status alarm-type-badge badge-{{ alert.alert_type }}">{{ alert.get_alert_type_display }}</span></td>
+                                <td>
+                                    <div class="fw-semibold">{{ alert.title }}</div>
+                                    <small class="text-muted">{{ alert.description|truncatewords:10 }}</small>
+                                </td>
+                                <td>{{ alert.building.name }}</td>
+                                <td>{{ alert.triggered_by.get_full_name|default:alert.triggered_by.username }}</td>
+                                <td><span class="badge badge-status badge-{{ alert.status }}">{{ alert.get_status_display }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-shield-check" style="font-size:2rem;"></i>
+                                    <p class="mt-2 mb-0">Belum ada riwayat alarm</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Verifikasi User -->
+        <div class="tab-content-panel {% if active_alert %}d-none{% endif %}" id="tab-verify">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h5><i class="bi bi-person-check-fill me-2"></i>User Menunggu Verifikasi</h5>
+                    <div class="table-tools">
+                        <select class="form-select form-select-sm building-filter" onchange="filterTableByBuilding('table-pending', this.value)">
+                            <option value="">Semua Gedung</option>
+                            {% for building in buildings %}
+                            <option value="{{ building.id }}">{{ building.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="badge badge-status badge-pending" id="pending-total">{{ pending_users|length }} user</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark-custom" id="table-pending">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>No HP</th>
+                                <th>Disabilitas</th>
+                                <th>Waktu Daftar</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for profile in pending_users %}
+                            <tr id="pending-row-{{ profile.id }}" data-building-id="{{ profile.building.id|default:'' }}">
+                                <td>
+                                    <div class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                                    <small class="text-muted">{{ profile.user.email }}</small>
+                                </td>
+                                <td><a href="tel:{{ profile.phone_number }}" class="phone-link"><i class="bi bi-telephone-fill"></i>{{ profile.phone_number }}</a></td>
+                                <td><span class="disability-pill active-disability-pill disability-{{ profile.disability_type }}">{{ profile.get_disability_type_display }}</span></td>
+                                <td><small>{{ profile.created_at|date:'d M Y H:i' }}</small></td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="btn btn-sm btn-success" onclick="verifyUser({{ profile.id }}, 'active')" title="Verifikasi">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="verifyUser({{ profile.id }}, 'blocked')" title="Tolak">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-check-circle" style="font-size:2rem;"></i>
+                                    <p class="mt-2 mb-0">Tidak ada user yang menunggu verifikasi</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Daftar User -->
+        <div class="tab-content-panel d-none" id="tab-users">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h5><i class="bi bi-people-fill me-2"></i>Daftar Semua User Aktif</h5>
+                    <div class="table-tools">
+                        <select class="form-select form-select-sm building-filter" onchange="filterTableByBuilding('table-users', this.value)">
+                            <option value="">Semua Gedung</option>
+                            {% for building in buildings %}
+                            <option value="{{ building.id }}">{{ building.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark-custom" id="table-users">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>No HP</th>
+                                <th>Disabilitas</th>
+                                <th>Admin Status</th>
+                                <th>Di Gedung</th>
+                                <th>Lokasi Terakhir</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for profile in active_profiles %}
+                            <tr data-building-id="{{ profile.building.id|default:'' }}">
+                                <td>
+                                    <div class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                                    <small class="text-muted">{{ profile.user.email }}</small>
+                                </td>
+                                <td><a href="tel:{{ profile.phone_number }}" class="phone-link"><i class="bi bi-telephone-fill"></i>{{ profile.phone_number }}</a></td>
+                                <td><span class="disability-pill disability-{{ profile.disability_type }}">{{ profile.get_disability_type_display }}</span></td>
+                                <td>
+                                    <select class="form-select form-select-sm status-select admin-status-select" onchange="updateUserStatus({{ profile.id }}, this.value)" data-profile-id="{{ profile.id }}">
+                                        <option value="active" {% if profile.status == 'active' %}selected{% endif %}>Aman (Active)</option>
+                                        <option value="pending" {% if profile.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="blocked" {% if profile.status == 'blocked' %}selected{% endif %}>Blocked</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    {% if profile.is_inside_building %}
+                                    <span class="badge badge-status badge-safe"><i class="bi bi-geo-alt-fill me-1"></i>Ya</span>
+                                    {% else %}
+                                    <span class="badge badge-status badge-outside"><i class="bi bi-geo me-1"></i>Tidak</span>
+                                    {% endif %}
+                                </td>
+                                <td><small class="location-text">{{ profile.last_location|default:'-' }}</small></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="bi bi-people" style="font-size:2rem;"></i>
+                                    <p class="mt-2 mb-0">Belum ada user terdaftar</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toast-container" style="z-index:9999;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    // Pass active alert id to JS if exists
+    {% if active_alert %}
+    window.ACTIVE_ALERT_ID = {{ active_alert.id }};
+    {% else %}
+    window.ACTIVE_ALERT_ID = null;
+    {% endif %}
+    
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTimestamp();
+        if (window.ACTIVE_ALERT_ID) {
+            loadConfirmations(window.ACTIVE_ALERT_ID);
+        }
+        // Start live polling
+        setInterval(function() {
+            refreshStats();
+            if (window.ACTIVE_ALERT_ID) {
+                loadConfirmations(window.ACTIVE_ALERT_ID);
+            }
+        }, 5000);
+    });
+</script>
+{% endblock %}

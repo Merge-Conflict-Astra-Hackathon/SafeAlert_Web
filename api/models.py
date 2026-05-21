@@ -99,6 +99,7 @@ class UserAlertConfirmation(models.Model):
 
     alert = models.ForeignKey(EmergencyAlert, on_delete=models.CASCADE, related_name='user_confirmations')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='alert_confirmations')
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='user_alert_confirmations', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='no_response')
     location = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
@@ -124,6 +125,7 @@ class AlertLog(models.Model):
     ]
 
     alert = models.ForeignKey(EmergencyAlert, on_delete=models.CASCADE, related_name='logs')
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='alert_logs', null=True, blank=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     description = models.TextField()
     performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

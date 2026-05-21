@@ -5,12 +5,42 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.conf import settings
+import os
 from api.models import Building, UserProfile, EmergencyAlert, UserAlertConfirmation, AlertLog
 from api.serializers import (
     UserSerializer, UserProfileSerializer, BuildingSerializer,
     EmergencyAlertSerializer, EmergencyAlertCreateSerializer,
     UserAlertConfirmationSerializer, AlertLogSerializer
 )
+import firebase_admin
+from firebase_admin import credentials, messaging
+
+
+def _send_fcm_multicast(tokens, title, body, payload):
+    """Best-effort FCM send. Returns (success_count, error_message)."""
+    if not tokens:
+        return 0, None
+
+    cred_path = getattr(settings, "FIREBASE_CREDENTIALS_PATH", "firebase-credentials.json")
+    if not os.path.exists(cred_path):
+        return 0, f"Firebase credentials tidak ditemukan di: {cred_path}"
+
+    try:
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+
+        msg = messaging.MulticastMessage(
+            tokens=tokens,
+            notification=messaging.Notification(title=title, body=body[:120]),
+            data={k: str(v) for k, v in payload.items()},
+            android=messaging.AndroidConfig(priority="high"),
+        )
+        result = messaging.send_each_for_multicast(msg)
+        return result.success_count, None
+    except Exception as exc:
+        return 0, str(exc)
 
 
 class BuildingViewSet(viewsets.ModelViewSet):
@@ -65,12 +95,42 @@ class EmergencyAlertViewSet(viewsets.ModelViewSet):
         """Create alert dengan triggered_by sebagai current user"""
         serializer.save(triggered_by=self.request.user)
         alert = serializer.instance
+
+        active_profiles = UserProfile.objects.select_related("user").filter(status="active")
+        confirmations = [
+            UserAlertConfirmation(alert=alert, user=profile.user, building=alert.building, status='no_response')
+            for profile in active_profiles
+        ]
+        if confirmations:
+            UserAlertConfirmation.objects.bulk_create(confirmations, ignore_conflicts=True)
+
+        tokens = [p.fcm_token for p in active_profiles if p.fcm_token]
+        sent_count, fcm_error = _send_fcm_multicast(
+            tokens=tokens,
+            title=f"ALARM DARURAT: {alert.title}",
+            body=alert.description,
+            payload={
+                "type": "emergency",
+                "alert_id": alert.id,
+                "title": alert.title,
+                "message": alert.description,
+            },
+        )
         
         # Create log
         AlertLog.objects.create(
             alert=alert,
+            building=alert.building,
             action='created',
             description='Alert darurat dibuat oleh operator',
+            performed_by=self.request.user
+        )
+        AlertLog.objects.create(
+            alert=alert,
+            building=alert.building,
+            action='sent',
+            description=f'Notifikasi dikirim ke {sent_count}/{len(tokens)} device aktif.'
+            + (f' FCM fallback: {fcm_error}' if fcm_error else ''),
             performed_by=self.request.user
         )
     
@@ -85,6 +145,7 @@ class EmergencyAlertViewSet(viewsets.ModelViewSet):
         # Create log
         AlertLog.objects.create(
             alert=alert,
+            building=alert.building,
             action='resolved',
             description='Alert ditandai sebagai terselesaikan',
             performed_by=request.user
@@ -102,6 +163,7 @@ class EmergencyAlertViewSet(viewsets.ModelViewSet):
         # Create log
         AlertLog.objects.create(
             alert=alert,
+            building=alert.building,
             action='cancelled',
             description='Alert dibatalkan',
             performed_by=request.user
@@ -139,6 +201,7 @@ class UserAlertConfirmationViewSet(viewsets.ModelViewSet):
             confirmation.status = status_value
             confirmation.location = location
             confirmation.notes = notes
+            confirmation.building = confirmation.alert.building
             confirmation.confirmed_at = timezone.now()
             confirmation.save()
             
