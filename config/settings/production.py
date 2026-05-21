@@ -5,6 +5,11 @@ import dj_database_url
 DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
+railway_public_domain = config('RAILWAY_PUBLIC_DOMAIN', default='')
+if railway_public_domain and railway_public_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(railway_public_domain)
+if '.up.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('.up.railway.app')
 
 database_url = config('DATABASE_URL', default='')
 if database_url:
