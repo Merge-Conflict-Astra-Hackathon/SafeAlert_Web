@@ -187,7 +187,7 @@
                         <small class="text-muted">{{ active_alert.triggered_by.get_full_name|default:active_alert.triggered_by.username }} | {{ active_alert.created_at|date:'d M Y H:i:s' }}</small>
                     </div>
                     <div class="modal-footer border-0">
-                        <button class="btn btn-outline-warning" onclick="resolveAlert({{ active_alert.id }})">
+                        <button class="btn btn-outline-success" onclick="resolveAlert({{ active_alert.id }})">
                             <i class="bi bi-check-circle me-1"></i>Selesaikan Alarm
                         </button>
                         <button class="btn btn-outline-danger" onclick="cancelAlert({{ active_alert.id }})">
@@ -438,7 +438,7 @@
                                 <th>Nama</th>
                                 <th>Notes Darurat</th>
                                 <th>Disabilitas</th>
-                                <th>Status</th>
+                                <th class="status-header">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -450,16 +450,11 @@
                                 </td>
                                 <td>
                                     <div class="user-notes-cell" id="user-notes-{{ profile.user.id }}">
-                                        {% if profile.latest_emergency_note or profile.latest_emergency_location or profile.latest_emergency_alert_title %}
+                                        {% if profile.latest_emergency_location %}
                                         <div class="user-notes-alert">
                                             <div class="user-notes-meta">
                                                 <i class="bi bi-geo-alt me-1"></i>{{ profile.latest_emergency_location|default:'Lokasi tidak diketahui' }}
                                             </div>
-                                            {% if profile.latest_emergency_alert_title %}
-                                            <div class="user-notes-meta">
-                                                <i class="bi bi-bell me-1"></i>{{ profile.latest_emergency_alert_title }}
-                                            </div>
-                                            {% endif %}
                                         </div>
                                         {% else %}
                                         <span class="text-muted">Belum ada notes</span>

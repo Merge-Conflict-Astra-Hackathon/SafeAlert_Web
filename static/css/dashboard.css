@@ -2374,9 +2374,9 @@ body.login-page {
 }
 
 .dashboard-page #table-users .disaster-status-select.status-safe {
-    background: #fbe8e6 !important;
-    color: #BA3525 !important;
-    border-color: rgba(186, 53, 37, .22) !important;
+    background: #e4f3ea !important;
+    color: #1f7a46 !important;
+    border-color: rgba(31, 122, 70, .22) !important;
 }
 
 .dashboard-page #table-users .disaster-status-select.status-needs_help {
@@ -2404,6 +2404,10 @@ body.login-page {
 }
 
 .dashboard-page #table-users .status-cell {
+    text-align: center !important;
+}
+
+.dashboard-page #table-users .status-header {
     text-align: center !important;
 }
 
