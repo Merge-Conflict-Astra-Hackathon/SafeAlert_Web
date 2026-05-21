@@ -698,6 +698,7 @@ function refreshStats() {
             active_users: Number(data.active_users || 0),
             pending_users: Number(data.pending_users || 0),
             active_alerts: Number(data.active_alerts || 0),
+            last_activity: data.last_activity || '',
         };
         const shouldReload = lastStatsSnapshot && Object.keys(nextSnapshot).some(
             key => nextSnapshot[key] !== lastStatsSnapshot[key]

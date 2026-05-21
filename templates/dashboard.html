@@ -69,7 +69,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-shield-fill-check" style="font-size:1.5rem;color:#ef4444;"></i>
+                <img src="{% static 'img/safealert-logo.png' %}" alt="SafeAlert" class="sidebar-logo-img">
                 <div>
                     <h5 class="mb-0 fw-bold">SafeAlert</h5>
                     <small class="text-muted">Control Center</small>
@@ -79,7 +79,7 @@
         
         <nav class="sidebar-nav">
             <div class="nav-section-title">MENU UTAMA</div>
-            <a href="#" class="nav-link {% if active_alert %}active{% endif %}" data-tab="tab-alerts" onclick="switchTab(this, 'tab-alerts')">
+            <a href="#" class="nav-link active" data-tab="tab-alerts" onclick="switchTab(this, 'tab-alerts')">
                 <i class="bi bi-megaphone-fill"></i>
                 <span>Alarm & Riwayat</span>
                 {% if active_alert %}
@@ -87,19 +87,19 @@
                 {% endif %}
             </a>
             <a href="#"
-               class="nav-link {% if not active_alert %}active{% endif %}"
-               data-tab="tab-verify"
-               onclick="switchTab(this, 'tab-verify')">
-                <i class="bi bi-person-check-fill"></i>
-                <span>Verifikasi User</span>
-                <span class="badge bg-warning text-dark ms-auto" id="pending-count-badge">{{ pending_count }}</span>
-            </a>
-            <a href="#"
                class="nav-link"
                data-tab="tab-users"
                onclick="switchTab(this, 'tab-users')">
                 <i class="bi bi-people-fill"></i>
                 <span>Daftar User</span>
+            </a>
+            <a href="#"
+               class="nav-link"
+               data-tab="tab-verify"
+               onclick="switchTab(this, 'tab-verify')">
+                <i class="bi bi-person-check-fill"></i>
+                <span>Verifikasi User</span>
+                <span class="badge bg-warning text-dark ms-auto" id="pending-count-badge">{{ pending_count }}</span>
             </a>
             <a href="#"
                class="nav-link"
@@ -137,7 +137,6 @@
                         <span class="live-dot"></span>
                         <span>Live Monitoring</span>
                     </span>
-                    &mdash; Update otomatis setiap 1 detik
                 </p>
             </div>
             <div class="d-flex align-items-center gap-3">
@@ -201,7 +200,7 @@
         {% endif %}
 
         <!-- TAB 1: Alarm & Riwayat -->
-        <div class="tab-content-panel {% if not active_alert %}d-none{% endif %}" id="tab-alerts">
+        <div class="tab-content-panel" id="tab-alerts">
             <!-- Send Alarm Panel -->
             <div class="alert-panel alarm-register-card {% if active_alert %}has-active-alert urgent-top-panel{% endif %}" id="alarm-panel">
                 <div class="alarm-card-header">
@@ -358,7 +357,7 @@
         </div>
 
         <!-- TAB 2: Verifikasi User -->
-        <div class="tab-content-panel {% if active_alert %}d-none{% endif %}" id="tab-verify">
+        <div class="tab-content-panel d-none" id="tab-verify">
             <div class="content-card">
                 <div class="content-card-header">
                     <h5><i class="bi bi-person-check-fill me-2"></i>User Menunggu Verifikasi</h5>

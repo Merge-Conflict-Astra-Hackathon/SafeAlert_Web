@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.db.models import Case, IntegerField, Value, When
+from django.db.models import Case, IntegerField, Max, Value, When
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -134,11 +134,20 @@ def dashboard_view(request):
 
 @login_required(login_url="dashboard:login")
 def dashboard_stats_api(request):
+    latest_candidates = [
+        UserProfile.objects.aggregate(value=Max("updated_at"))["value"],
+        EmergencyAlert.objects.aggregate(value=Max("updated_at"))["value"],
+        UserAlertConfirmation.objects.aggregate(value=Max("confirmed_at"))["value"],
+        UserAlertConfirmation.objects.aggregate(value=Max("notified_at"))["value"],
+        Building.objects.aggregate(value=Max("updated_at"))["value"],
+    ]
+    latest_activity = max((item for item in latest_candidates if item), default=None)
     data = {
         "total_users": UserProfile.objects.count(),
         "active_users": UserProfile.objects.filter(status="active").count(),
         "pending_users": UserProfile.objects.filter(status="pending").count(),
         "active_alerts": EmergencyAlert.objects.filter(status="active").count(),
+        "last_activity": latest_activity.isoformat() if latest_activity else "",
     }
     return JsonResponse(data)
 
