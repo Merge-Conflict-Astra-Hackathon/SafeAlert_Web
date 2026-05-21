@@ -170,11 +170,16 @@ C:\Users\Wildan\.copilot\session-state\13d9805b-98e6-47a3-a1c1-0516216e536f\
 
 ### Project Repository (Code & Original Docs)
 ```
-C:\Users\Wildan\Kuliah\Lomba\AstraHackathon\Simulasi_Hackathon_Astra\
+SafeAlert_Web\
 ├── README.md                               ← Quick start
-├── DOKUMEN_ARSITEKTUR_SAFEALERT.txt       ← Full 20-page spec
-├── safealert_backend\                      ← Django project
-└── safealert_mobile\                       ← Flutter project
+├── Dokumen/                                ← Documentation
+├── .gitignore                              ← Git ignore file
+├── safealert/                              ← Django project config
+├── api/                                    ← API app
+├── manage.py                               ← Django CLI
+├── requirements.txt                        ← Python dependencies
+├── seed_mock_data.py                       ← Mock data generator
+└── .venv/                                  ← Virtual environment (not tracked)
 ```
 
 ---

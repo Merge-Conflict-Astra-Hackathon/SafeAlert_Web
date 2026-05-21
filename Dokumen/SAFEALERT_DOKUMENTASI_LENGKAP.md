@@ -87,9 +87,9 @@ SafeAlert adalah platform manajemen **evakuasi darurat yang inklusif** untuk pen
 
 ## 📁 Struktur Folder & Komponen
 
-### Backend (`safealert_backend/`)
+### Backend (Root Directory)
 ```
-safealert_backend/
+SafeAlert_Web/
 ├── safealert/                  # Django project config
 │   ├── settings.py            # Environment & DB config
 │   ├── urls.py                # URL routing
@@ -196,12 +196,7 @@ cd Simulasi_Hackathon_Astra
 
 ### 2. Setup Backend
 
-#### 2.1 Navigasi ke direktori backend
-```bash
-cd safealert_backend
-```
-
-#### 2.2 Buat & aktifkan virtual environment
+#### 2.1 Buat & aktifkan virtual environment
 **Windows:**
 ```bash
 python -m venv .venv
@@ -214,16 +209,16 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-#### 2.3 Install dependencies
+#### 2.2 Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 2.4 Setup Firebase credentials (opsional)
+#### 2.3 Setup Firebase credentials (opsional)
 - Unduh `firebase-credentials.json` dari Firebase Console
-- Letakkan di root `safealert_backend/`
+- Letakkan di root project directory
 
-#### 2.5 Inisialisasi database & seed mock data
+#### 2.4 Inisialisasi database & seed mock data
 ```bash
 python seed_mock_data.py
 ```

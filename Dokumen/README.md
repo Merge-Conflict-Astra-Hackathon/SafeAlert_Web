@@ -30,13 +30,7 @@ Pastikan sistem Anda telah menginstal:
 
 Ikuti langkah-langkah di bawah ini untuk menjalankan backend dan dashboard secara lokal:
 
-### 1. Navigasi ke Direktori Backend
-Buka terminal/Command Prompt, lalu masuk ke direktori backend:
-```bash
-cd safealert_backend
-```
-
-### 2. Buat dan Aktifkan Virtual Environment (Venv)
+### 1. Buat dan Aktifkan Virtual Environment (Venv)
 Sangat disarankan menggunakan virtual environment agar dependensi tidak bentrok.
 **Windows:**
 ```bash
@@ -49,14 +43,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Instal Dependensi
+### 2. Instal Dependensi
 Jalankan perintah berikut untuk menginstal semua library yang diperlukan:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Setup Kredensial Firebase (Opsional untuk testing lokal)
-Untuk fitur push notification, pastikan Anda memiliki file `firebase-credentials.json` (Service Account Key dari Firebase Console) dan meletakkannya di root direktori `safealert_backend`. Jika Anda hanya mengetes UI, ini bisa diabaikan atau akan menampilkan peringatan FCM.
+### 3. Setup Kredensial Firebase (Opsional untuk testing lokal)
+Untuk fitur push notification, pastikan Anda memiliki file `firebase-credentials.json` (Service Account Key dari Firebase Console) dan meletakkannya di root direktori project. Jika Anda hanya mengetes UI, ini bisa diabaikan atau akan menampilkan peringatan FCM.
 
 ### 5. Inisialisasi & Seeding Database (Penting!)
 Kami telah menyiapkan skrip khusus untuk men-generate data uji (mock data) sehingga dashboard langsung terisi dengan data yang realistis tanpa perlu registrasi manual. 
@@ -71,7 +65,7 @@ python seed_mock_data.py
 - 3 User Pending (menunggu verifikasi)
 - Riwayat Alarm dan konfirmasi simulasi.
 
-### 6. Jalankan Development Server
+### 5. Jalankan Development Server
 Mulai server Django dengan:
 ```bash
 python manage.py runserver

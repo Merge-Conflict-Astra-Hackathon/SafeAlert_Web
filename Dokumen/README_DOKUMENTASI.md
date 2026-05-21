@@ -94,20 +94,26 @@ UPDATE todos SET status = 'in_progress' WHERE id = 'backend-user-model';
 ## 📂 Project Repository Structure
 
 ```
-Simulasi_Hackathon_Astra/
+SafeAlert_Web/
 ├── 📄 README.md                              ← Quick start guide
-├── 📄 DOKUMEN_ARSITEKTUR_SAFEALERT.txt      ← Official 20-page spec
-├── 📄 SAFEALERT_AGENT_PROMPT_v2.md          ← AI agent prompt
-├── 📄 implementation_plan.md.resolved       ← Frontend polish plan
+├── 📄 .gitignore                             ← Git ignore
 │
-├── 📁 safealert_backend/                    ← Django project (Dev 2)
-│   ├── safealert/                           ← Django config
-│   ├── users/                               ← User management app
-│   ├── alarms/                              ← Alarm management app
-│   ├── confirmations/                       ← Confirmation tracking
-│   ├── dashboard/                           ← Admin web UI
-│   ├── manage.py                            ← Django CLI
-│   ├── requirements.txt                     ← Python deps
+├── 📁 Dokumen/                               ← Documentation folder
+│   ├── 00_START_HERE.md
+│   ├── README_DOKUMENTASI.md                ← This file
+│   ├── SAFEALERT_DOKUMENTASI_LENGKAP.md
+│   ├── SAFEALERT_PROJECT_STATUS.md
+│   └── ... (other docs)
+│
+├── 📁 safealert/                             ← Django config
+├── 📁 api/                                   ← API app
+│   ├── models.py                            ← Database models
+│   ├── views.py                             ← ViewSets
+│   ├── serializers.py                       ← DRF serializers
+│   └── urls.py                              ← API routing
+│
+├── 📄 manage.py                              ← Django CLI
+├── 📄 requirements.txt                       ← Python deps
 │   ├── seed_mock_data.py                    ← Mock data script
 │   └── .env                                 ← Environment vars
 │

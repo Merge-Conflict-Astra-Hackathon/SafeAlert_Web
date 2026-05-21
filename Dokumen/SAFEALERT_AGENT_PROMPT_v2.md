@@ -74,7 +74,7 @@ gunicorn==22.0.0
 ## Struktur Project Django
 
 ```
-safealert_backend/
+SafeAlert_Web/
 ├── manage.py
 ├── requirements.txt
 ├── .env
@@ -82,7 +82,7 @@ safealert_backend/
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
-├── users/                  ← Dev 2: model User, endpoint register & status
+├── api/                    ← API app with all models & views
 │   ├── models.py
 │   ├── serializers.py
 │   ├── views.py

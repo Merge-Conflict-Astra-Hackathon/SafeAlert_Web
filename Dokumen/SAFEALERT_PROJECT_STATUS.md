@@ -190,14 +190,13 @@ Auto-dismiss after 5 seconds
 
 ### Current State
 ```
-Simulasi_Hackathon_Astra/
-├── safealert_backend/          ← Dev 2 responsible
-│   ├── safealert/              ← Django project config
-│   ├── users/                  ← User management app
-│   ├── alarms/                 ← Alarm management app
-│   ├── confirmations/          ← Confirmation tracking
-│   ├── dashboard/              ← Admin web interface
-│   ├── manage.py               ← Django CLI
+SafeAlert_Web/
+├── api/                        ← API app
+│   ├── migrations/
+│   ├── models.py               ← Building, UserProfile, EmergencyAlert, UserAlertConfirmation, AlertLog
+│   ├── views.py                ← ViewSets untuk API
+│   ├── serializers.py          ← DRF serializers
+│   └── urls.py                 ← API routing
 │   ├── requirements.txt        ← Python dependencies
 │   ├── seed_mock_data.py       ← Test data seeder
 │   └── .env                    ← Environment variables
@@ -268,14 +267,14 @@ Simulasi_Hackathon_Astra/
 
 ### Backend Setup
 ```bash
-cd safealert_backend
 python -m venv .venv
 .venv\Scripts\activate                    # Windows
 # or source .venv/bin/activate            # Mac/Linux
 pip install -r requirements.txt
 python seed_mock_data.py
 python manage.py runserver
-# Dashboard: http://127.0.0.1:8000/dashboard/
+# Dashboard: http://127.0.0.1:8000/admin/
+# API: http://127.0.0.1:8000/api/
 # Username: admin_gedung | Password: password123
 ```
 
