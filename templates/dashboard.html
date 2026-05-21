@@ -450,10 +450,10 @@
                                 </td>
                                 <td>
                                     <div class="user-notes-cell" id="user-notes-{{ profile.user.id }}">
-                                        {% if profile.latest_emergency_location %}
+                                        {% if profile.latest_emergency_note %}
                                         <div class="user-notes-alert">
-                                            <div class="user-notes-meta">
-                                                <i class="bi bi-geo-alt me-1"></i>{{ profile.latest_emergency_location|default:'Lokasi tidak diketahui' }}
+                                            <div class="user-notes-body">
+                                                {{ profile.latest_emergency_note }}
                                             </div>
                                         </div>
                                         {% else %}

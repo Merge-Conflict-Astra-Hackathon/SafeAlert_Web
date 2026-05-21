@@ -636,15 +636,13 @@ function updateUserNotesCell(confirmation, userName) {
     if (!notesCell) return;
 
     const rawNotes = (confirmation.notes || '').trim();
-    const rawLocation = (confirmation.location || '').trim();
-    if (!rawNotes && !rawLocation) return;
+    if (!rawNotes) return;
 
     const notes = escapeHtml(rawNotes);
-    const location = escapeHtml(rawLocation || 'Lokasi tidak diketahui');
 
     notesCell.innerHTML = `
         <div class="user-notes-alert">
-            <div class="user-notes-meta"><i class="bi bi-geo-alt me-1"></i>${location}</div>
+            <div class="user-notes-body">${notes}</div>
         </div>
     `;
 
