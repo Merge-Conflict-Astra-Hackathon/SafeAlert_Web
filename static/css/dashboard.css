@@ -2662,6 +2662,45 @@ body.login-page {
     background: var(--sa-surface) !important;
 }
 
+.dashboard-page .building-modal-content {
+    background: #fff !important;
+    color: var(--sa-text) !important;
+    border: 1.5px solid var(--sa-border) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 18px 46px rgba(90, 70, 40, 0.18) !important;
+}
+
+.dashboard-page .building-modal-content .modal-header,
+.dashboard-page .building-modal-content .modal-footer {
+    border-color: var(--sa-border) !important;
+}
+
+.dashboard-page .building-modal-content .form-label {
+    color: var(--sa-text) !important;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.dashboard-page .building-modal-content .form-control {
+    background: var(--sa-surface) !important;
+    border: 1.5px solid var(--sa-border) !important;
+    color: var(--sa-text) !important;
+    border-radius: 12px !important;
+    min-height: 44px;
+}
+
+.dashboard-page .building-modal-content .form-control:focus {
+    border-color: var(--sa-brand) !important;
+    box-shadow: 0 0 0 3px rgba(40, 46, 88, 0.12) !important;
+}
+
+.dashboard-page #table-buildings .building-address-cell {
+    max-width: 360px;
+    white-space: normal;
+}
+
 @media (max-width: 768px) {
     .dashboard-page .alarm-card-header {
         flex-direction: column;

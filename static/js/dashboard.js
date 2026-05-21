@@ -124,6 +124,10 @@ function escapeHtml(value) {
         .replaceAll("'", '&#039;');
 }
 
+function escapeAttr(value) {
+    return escapeHtml(value).replaceAll('`', '&#096;');
+}
+
 // ============================================
 // Tab Navigation
 // ============================================
@@ -159,6 +163,163 @@ function filterTableByBuilding(tableId, buildingId) {
     table.querySelectorAll('tbody tr[data-building-id]').forEach(row => {
         const matches = !buildingId || row.dataset.buildingId === buildingId;
         row.classList.toggle('d-none', !matches);
+    });
+}
+
+// ============================================
+// Building CRUD
+// ============================================
+function openBuildingModal(buildingId = null) {
+    const modalEl = document.getElementById('buildingModal');
+    const form = document.getElementById('building-form');
+    if (!modalEl || !form) return;
+
+    form.reset();
+    document.getElementById('building-id').value = '';
+    document.getElementById('building-capacity').value = '0';
+    document.getElementById('building-modal-title').textContent = 'Tambah Gedung';
+
+    if (buildingId) {
+        const row = document.getElementById(`building-row-${buildingId}`);
+        if (!row) return;
+
+        document.getElementById('building-id').value = buildingId;
+        document.getElementById('building-name').value = row.dataset.name || '';
+        document.getElementById('building-address').value = row.dataset.address || '';
+        document.getElementById('building-capacity').value = row.dataset.totalCapacity || '0';
+        document.getElementById('building-latitude').value = row.dataset.latitude || '';
+        document.getElementById('building-longitude').value = row.dataset.longitude || '';
+        document.getElementById('building-modal-title').textContent = 'Edit Gedung';
+    }
+
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+function serializeBuildingForm() {
+    return {
+        name: document.getElementById('building-name').value.trim(),
+        address: document.getElementById('building-address').value.trim(),
+        total_capacity: document.getElementById('building-capacity').value || 0,
+        latitude: document.getElementById('building-latitude').value,
+        longitude: document.getElementById('building-longitude').value
+    };
+}
+
+function buildingRowHtml(building) {
+    const latitude = building.latitude ?? '';
+    const longitude = building.longitude ?? '';
+    const coordinate = latitude !== '' && latitude !== null && longitude !== '' && longitude !== null
+        ? `${escapeHtml(latitude)}, ${escapeHtml(longitude)}`
+        : '<span class="text-muted">-</span>';
+
+    return `
+        <tr id="building-row-${building.id}"
+            data-building-id="${building.id}"
+            data-name="${escapeAttr(building.name)}"
+            data-address="${escapeAttr(building.address)}"
+            data-total-capacity="${building.total_capacity}"
+            data-latitude="${latitude ?? ''}"
+            data-longitude="${longitude ?? ''}">
+            <td class="fw-semibold building-name-cell">${escapeHtml(building.name)}</td>
+            <td class="building-address-cell">${escapeHtml(building.address)}</td>
+            <td class="building-capacity-cell">${building.total_capacity}</td>
+            <td class="building-coordinate-cell">${coordinate}</td>
+            <td>${building.user_count ?? 0}</td>
+            <td>${building.alert_count ?? 0}</td>
+            <td>
+                <div class="action-group">
+                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="openBuildingModal(${building.id})" title="Edit">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteBuilding(${building.id})" title="Hapus">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function upsertBuildingRow(building) {
+    const emptyRow = document.getElementById('building-empty-row');
+    if (emptyRow) emptyRow.remove();
+
+    const tableBody = document.querySelector('#table-buildings tbody');
+    if (!tableBody) return;
+
+    const existing = document.getElementById(`building-row-${building.id}`);
+    const html = buildingRowHtml(building);
+    if (existing) {
+        existing.outerHTML = html;
+    } else {
+        tableBody.insertAdjacentHTML('afterbegin', html);
+    }
+}
+
+const buildingForm = document.getElementById('building-form');
+if (buildingForm) {
+    buildingForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const buildingId = document.getElementById('building-id').value;
+        const payload = serializeBuildingForm();
+        if (!payload.name || !payload.address) {
+            showToast('Nama dan alamat gedung wajib diisi.', 'warning');
+            return;
+        }
+
+        const submitBtn = document.getElementById('building-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+
+        fetch(buildingId ? `/dashboard/api/buildings/${buildingId}/` : '/dashboard/api/buildings/', {
+            method: buildingId ? 'PATCH' : 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json().then(data => {
+            if (!response.ok) throw new Error(data.message || 'Gagal menyimpan gedung');
+            return data;
+        }))
+        .then(data => {
+            upsertBuildingRow(data.building);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('buildingModal')).hide();
+            showToast(data.message || 'Gedung berhasil disimpan', 'success');
+        })
+        .catch(error => {
+            showToast(error.message, 'danger');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-save me-1"></i>Simpan Gedung';
+        });
+    });
+}
+
+function deleteBuilding(buildingId) {
+    const row = document.getElementById(`building-row-${buildingId}`);
+    const buildingName = row?.dataset.name || 'gedung ini';
+    if (!confirm(`Hapus ${buildingName}?`)) return;
+
+    fetch(`/dashboard/api/buildings/${buildingId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json().then(data => {
+        if (!response.ok) throw new Error(data.message || 'Gagal menghapus gedung');
+        return data;
+    }))
+    .then(data => {
+        row?.remove();
+        showToast(data.message || 'Gedung berhasil dihapus', 'success');
+    })
+    .catch(error => {
+        showToast(error.message, 'danger');
     });
 }
 
