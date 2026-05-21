@@ -4,7 +4,7 @@ Seed script untuk membuat mock data untuk testing
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'safealert.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 django.setup()
 
 from django.contrib.auth.models import User
@@ -20,7 +20,7 @@ def clear_data():
     UserProfile.objects.all().delete()
     Building.objects.all().delete()
     User.objects.filter(username__startswith='user_').delete()
-    print("✓ Data cleared")
+    print("[OK] Data cleared")
 
 
 def create_buildings():
@@ -42,7 +42,7 @@ def create_buildings():
             total_capacity=300
         ),
     ]
-    print(f"✓ Created {len(buildings)} buildings")
+    print(f"[OK] Created {len(buildings)} buildings")
     return buildings
 
 
@@ -97,7 +97,7 @@ def create_users(buildings):
         )
         created_users.append(user)
     
-    print(f"✓ Created {len(created_users)} users with profiles")
+    print(f"[OK] Created {len(created_users)} users with profiles")
     return created_users
 
 
@@ -117,7 +117,7 @@ def create_emergency_alerts(buildings, users):
         severity=4,
         triggered_by=admin_user,
     )
-    print(f"✓ Created emergency alert: {alert.title}")
+    print(f"[OK] Created emergency alert: {alert.title}")
     return alert
 
 
@@ -142,7 +142,7 @@ def create_alert_confirmations(alert, users):
             confirmation.save()
         confirmations.append(confirmation)
     
-    print(f"✓ Created {len(confirmations)} alert confirmations")
+    print(f"[OK] Created {len(confirmations)} alert confirmations")
     return confirmations
 
 
@@ -168,7 +168,7 @@ def create_alert_logs(alert):
         )
         logs.append(log)
     
-    print(f"✓ Created {len(logs)} alert logs")
+    print(f"[OK] Created {len(logs)} alert logs")
 
 
 def main():
@@ -179,6 +179,25 @@ def main():
     
     try:
         clear_data()
+        
+        # Ensure admin_gedung exists
+        admin_user, created = User.objects.get_or_create(
+            username='admin_gedung',
+            defaults={
+                'email': 'admin@safealert.local',
+                'first_name': 'Admin',
+                'last_name': 'Gedung',
+                'is_staff': True,
+                'is_superuser': True
+            }
+        )
+        if created:
+            admin_user.set_password('password123')
+            admin_user.save()
+            print("[OK] Created superuser: admin_gedung")
+        else:
+            print("[OK] Superuser admin_gedung already exists")
+
         buildings = create_buildings()
         users = create_users(buildings)
         alert = create_emergency_alerts(buildings, users)
@@ -186,7 +205,7 @@ def main():
         create_alert_logs(alert)
         
         print("\n" + "=" * 60)
-        print("✓ Seeding completed successfully!")
+        print("[OK] Seeding completed successfully!")
         print("=" * 60)
         print("\nLogin credentials:")
         print("  Username: admin_gedung")
@@ -196,7 +215,7 @@ def main():
         print("  Password: password123")
         
     except Exception as e:
-        print(f"\n✗ Error during seeding: {str(e)}")
+        print(f"\n[ERROR] Error during seeding: {str(e)}")
         import traceback
         traceback.print_exc()
 
