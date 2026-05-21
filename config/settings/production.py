@@ -2,7 +2,7 @@ from .base import *
 import dj_database_url
 
 # Production settings
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
 railway_public_domain = config('RAILWAY_PUBLIC_DOMAIN', default='')
