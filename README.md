@@ -5,9 +5,7 @@ Dashboard web SafeAlert untuk operator memverifikasi user, mengelola gedung, mel
 ## Link Deploy
 
 - Web production: https://safealertweb-production.up.railway.app/
-- Bitrise: https://safealertweb-production.up.railway.app/
-
-Catatan: link Bitrise di atas masih sama dengan link production yang diberikan. Ganti dengan URL Bitrise asli jika pipeline sudah tersedia.
+- Bitrise public install page: https://app.bitrise.io/app/5b53d64f-d036-4741-b0c4-84890afc5504/installable-artifacts/c39f30380d1c96a7/public-install-page/645575981041baa7239134bb1c260161
 
 ## Stack
 
